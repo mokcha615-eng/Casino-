@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+    overflow:hidden;
+    background:#000;
+    font-family:'Share Tech Mono',monospace;
+    user-select:none;
+    touch-action:none;
+    color:#0af;
+}
+
+/* LOCK SCREEN */
+#lock-screen{
+    position:absolute;inset:0;background:rgba(0,0,0,.96);z-index:300;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;
+    text-align:center;
+}
+#lock-screen h1{
+    font-family:'Orbitron',sans-serif;
+    font-size:68px;
+    color:#0af;
+    text-shadow:0 0 40px #0af, 0 0 90px #0af;
+    letter-spacing:12px;
+    animation:glow 1.8s infinite alternate;
+}
+@keyframes glow{
+    from{text-shadow:0 0 20px #0af, 0 0 40px #0af;}
+    to{text-shadow:0 0 60px #0af, 0 0 120px #0af, 0 0 180px #0af8;}
+}
+#lock-screen p{
+    color:#8cf;
+    font-size:15.5px;
+    line-height:1.75;
+    max-width:680px;
+}
+
+/* Buttons */
+.start-btn, .go-btn{
+    padding:18px 56px;
+    background:transparent;
+    border:3px solid #0af;
+    color:#0af;
+    font-family:'Orbitron',sans-serif;
+    font-size:20px;
+    letter-spacing:4px;
+    cursor:pointer;
+    transition:all .25s;
+    text-transform:uppercase;
+}
+.start-btn:hover, .go-btn:hover{
+    background:#0af;
+    color:#000;
+    box-shadow:0 0 50px #0af;
+    transform:scale(1.05);
+}
+
+/* HUD */
+#hud{position:absolute;inset:0;pointer-events:none;z-index:50}
+
+#top{
+    position:absolute;top:0;left:0;right:0;
+    display:flex;justify-content:space-between;align-items:flex-start;
+    padding:16px 32px 40px;
+    background:linear-gradient(to bottom,rgba(0,0,0,.85) 65%,transparent);
+}
+
+/* Stats */
+.stat{display:flex;flex-direction:column;gap:3px}
+.stat-lbl{font-size:10px;letter-spacing:4px;color:#0af;text-transform:uppercase}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:32px;color:#fff;text-shadow:0 0 16px #0af8}
+
+#wave-box{
+    background:rgba(0,170,255,.15);
+    border:2px solid #0af8;
+    padding:10px 32px;
+    border-radius:6px;
+}
+#wave-box .stat-val{font-size:38px;color:#ff0;text-shadow:0 0 25px #ff08}
+
+/* Bars */
+#bars{
+    position:absolute;bottom:110px;left:32px;
+    display:flex;flex-direction:column;gap:10px;width:280px;
+}
+.bar-row{display:flex;align-items:center;gap:12px}
+.bar-icon{font-size:18px;width:24px}
+.bar-bg{
+    flex:1;height:11px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.25);
+    border-radius:6px;
+    overflow:hidden;
+}
+.bar-fill{
+    height:100%;
+    border-radius:6px;
+    transition:width .1s linear;
+}
+
+/* Crosshair */
+#xhair{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:42px;height:42px;pointer-events:none;
+    filter:drop-shadow(0 0 8px #0af);
+}
+#xhair.spread{transform:translate(-50%,-50%) scale(2.1);opacity:0.7}
+
+/* Bottom */
+#bottom{
+    position:absolute;bottom:0;left:0;right:0;
+    display:flex;justify-content:space-between;align-items:flex-end;
+    padding:0 32px 24px;
+    background:linear-gradient(to top,rgba(0,0,0,.88) 60%,transparent);
+}
+
+/* Weapons */
+#weapon-rack{display:flex;gap:12px;align-items:flex-end}
+.wcard{
+    width:82px;padding:10px 8px 8px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,.1);
+    background:rgba(0,0,0,.65);
+    text-align:center;
+    transition:all .2s;
+}
+.wcard.active{
+    border-color:#0af;
+    background:rgba(0,170,255,.28);
+    box-shadow:0 0 22px #0af8;
+    transform:translateY(-8px);
+}
+
+/* Minimap */
+#minimap-wrap{position:relative;width:168px;height:168px}
+#mm{
+    width:168px;height:168px;
+    border-radius:50%;
+    overflow:hidden;
+    border:4px solid rgba(0,170,255,.8);
+    box-shadow:0 0 30px rgba(0,170,255,.5);
+}
+
+/* Effects */
+#vignette{
+    position:absolute;inset:0;
+    background:radial-gradient(circle at center,transparent 45%,rgba(180,20,20,.75));
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .15s;
+}
+#ammo-warn{
+    position:absolute;top:52%;left:50%;transform:translate(-50%,-50%);
+    font-family:'Orbitron',sans-serif;
+    font-size:18px;
+    letter-spacing:6px;
+    color:#f80;
+    text-shadow:0 0 20px #f80;
+    opacity:0;
+    pointer-events:none;
+}
+#wave-announce{
+    position:absolute;top:32%;left:50%;transform:translate(-50%,-50%);
+    font-family:'Orbitron',sans-serif;
+    font-size:48px;
+    letter-spacing:10px;
+    color:#ff0;
+    text-shadow:0 0 60px #0af;
+    opacity:0;
+    pointer-events:none;
+}
+
+/* Game Over */
+#gameover{
+    display:none;position:absolute;inset:0;
+    background:rgba(0,0,0,.94);
+    flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:28px;
+    z-index:200;
+}
+#gameover h1{
+    font-family:'Orbitron',sans-serif;
+    font-size:82px;
+    color:#f33;
+    letter-spacing:12px;
+    animation:gopulse 1s infinite alternate;
+}
+@keyframes gopulse{from{text-shadow:0 0 30px #f00}to{text-shadow:0 0 100px #f44,0 0 180px #f008}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.min.js"></script>
+
+  <title>roboter-baller-3d.html</title>
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7wn4+GPC90ZXh0Pjwvc3ZnPg==">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="roboter-baller-3d.html">
+  <meta property="og:image" content="https://deploy.ohg.marwitz.dev/mokhtar/xjeij/og-image.png">
+  <meta property="og:image:width" content="780">
+  <meta property="og:image:height" content="1688">
+  <link rel="manifest" href="manifest.json">
+  <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }</script>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lock-screen">
+    <h1>ROBOT BALLER 3D</h1>
+    <p>
+        WASD = Bewegung • SHIFT = Sprint • SPACE = Springen<br>
+        Linksklick = Schießen • 1-4 = Waffen • R = Nachladen • ESC = Maus
+    </p>
+    <button class="start-btn" id="startBtn">SPIEL STARTEN</button>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+    <div id="top">
+        <div class="stat"><span class="stat-lbl">PUNKTE</span><span class="stat-val" id="scoreEl">0</span></div>
+        <div id="wave-box" class="stat"><span class="stat-lbl">WAVE</span><span class="stat-val" id="waveEl">1</span></div>
+        <div class="stat" style="align-items:flex-end"><span class="stat-lbl">KILLS</span><span class="stat-val" id="killsEl">0</span></div>
+    </div>
+
+    <div id="bars">
+        <div class="bar-row"><span class="bar-icon">❤️</span><div class="bar-bg"><div class="bar-fill" id="hp-fill" style="width:100%;background:#0f0"></div></div><span class="bar-num" id="hpNum">100</span></div>
+        <div class="bar-row"><span class="bar-icon">⚡</span><div class="bar-bg"><div class="bar-fill" id="sp-fill" style="width:100%;background:#0af"></div></div><span class="bar-num" id="spNum">100</span></div>
+    </div>
+
+    <div id="xhair">
+        <svg viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="21" cy="21" r="8" stroke="#0af" stroke-width="1.8" stroke-dasharray="6 5"/>
+            <line x1="21" y1="1" x2="21" y2="12" stroke="#0af" stroke-width="2.5"/>
+            <line x1="21" y1="30" x2="21" y2="41" stroke="#0af" stroke-width="2.5"/>
+            <line x1="1" y1="21" x2="12" y2="21" stroke="#0af" stroke-width="2.5"/>
+            <line x1="30" y1="21" x2="41" y2="21" stroke="#0af" stroke-width="2.5"/>
+        </svg>
+    </div>
+
+    <div id="vignette"></div>
+    <div id="ammo-warn">NACHLADEN! [R]</div>
+    <div id="wave-announce"></div>
+    <div id="killfeed" style="position:absolute;top:90px;right:32px;display:flex;flex-direction:column;gap:6px;align-items:flex-end"></div>
+
+    <div id="bottom">
+        <div id="weapon-rack"></div>
+        <div id="minimap-wrap">
+            <div id="mm"><canvas id="mmC" width="168" height="168"></canvas></div>
+            <div style="position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:3px;color:#0af6">RADAR</div>
+        </div>
+    </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameover">
+    <h1>GAME OVER</h1>
+    <p id="go-score" style="font-size:22px;color:#0af"></p>
+    <p id="go-kills" style="font-size:22px;color:#0af"></p>
+    <p id="go-wave" style="font-size:22px;color:#0af"></p>
+    <button class="go-btn" onclick="location.reload()">NOCHMAL SPIELEN</button>
+</div>
+
+<script>
+// ==================== AUDIO (verbessert) ====================
+const AC = new (window.AudioContext || window.webkitAudioContext)();
+
+function playTone(freq, type, dur, vol = 0.25, freqEnd = null) {
+    const o = AC.createOscillator();
+    const g = AC.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, AC.currentTime);
+    if (freqEnd) o.frequency.exponentialRampToValueAtTime(freqEnd, AC.currentTime + dur);
+    g.gain.setValueAtTime(vol, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + dur);
+    o.connect(g).connect(AC.destination);
+    o.start();
+    o.stop(AC.currentTime + dur);
+}
+
+const snd = {
+    shoot: (weapon) => {
+        if (weapon === 0) { // Pistol
+            playTone(1100, 'square', 0.06, 0.22, 320);
+        } else if (weapon === 1) { // SMG
+            for(let i = 0; i < 5; i++) {
+                setTimeout(() => playTone(420 + Math.random()*220, 'sawtooth', 0.07, 0.13), i*18);
+            }
+        } else if (weapon === 2) { // Rifle
+            playTone(680, 'sawtooth', 0.09, 0.28, 240);
+        } else { // Shotgun
+            playTone(180, 'sawtooth', 0.35, 0.32, 65);
+            setTimeout(() => playTone(140, 'square', 0.18, 0.18), 40);
+        }
+    },
+    hit: () => { playTone(95, 'sawtooth', 0.14, 0.25, 38); },
+    die: () => { 
+        playTone(320,'sawtooth',0.6,0.3,55); 
+        setTimeout(()=>playTone(680,'square',0.25,0.15),80);
+    },
+    reload: () => {
+        playTone(680,'sine',0.12,0.1,480);
+        setTimeout(()=>playTone(1380,'sine',0.14,0.12),110);
+    },
+    wave: () => {
+        playTone(440,'sine',0.3,0.15,820);
+        setTimeout(()=>playTone(920,'sine',0.28,0.18),160);
+    }
+};
+
+// ==================== THREE.JS SETUP ====================
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x112233);
+scene.fog = new THREE.FogExp2(0x112233, 0.0038);
+
+const camera = new THREE.PerspectiveCamera(78, innerWidth/innerHeight, 0.1, 400);
+camera.position.set(0, 1.75, 12);
+
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:false});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.prepend(renderer.domElement);
+
+// Lighting
+scene.add(new THREE.AmbientLight(0xaaccff, 0.7));
+const hemi = new THREE.HemisphereLight(0xa0d0ff, 0x668833, 1.3);
+scene.add(hemi);
+
+const sun = new THREE.DirectionalLight(0xffeecc, 3.2);
+sun.position.set(80, 160, 90);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+scene.add(sun);
+
+// Beispiel-Boden
+const groundGeo = new THREE.PlaneGeometry(400, 400);
+const groundMat = new THREE.MeshLambertMaterial({color: 0x223311});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ==================== GAME VARIABLES ====================
+let score = 0, kills = 0, wave = 1, health = 100, stamina = 100;
+let currentWeapon = 0;
+let isReloading = false;
+
+// DOM Elements
+const scoreEl = document.getElementById('scoreEl');
+const waveEl = document.getElementById('waveEl');
+const killsEl = document.getElementById('killsEl');
+const hpFill = document.getElementById('hp-fill');
+const spFill = document.getElementById('sp-fill');
+
+// Start Button
+document.getElementById('startBtn').addEventListener('click', () => {
+    document.getElementById('lock-screen').style.display = 'none';
+    // Hier würde das eigentliche Spiel starten (Enemies spawnen, Controls, etc.)
+    console.log("%c🎮 ROBOT BALLER 3D gestartet!", "color:#0af;font-size:16px");
+    // TODO: Vollständige Game Loop + Enemy System hinzufügen
+});
+
+// Resize Handler
+window.addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
+
+// Einfache Animation Loop
+function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+}
+animate();
+
+// Platzhalter für weitere Features (Enemies, Shooting, etc.)
+console.log("%c✅ Verbesserte Version geladen. Nächste Schritte: Enemies, Shooting System, Touch Controls.", "color:#0f0");
+</script>
+</body>
+</html>

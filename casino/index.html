@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400;700&display=swap');
+        
+        :root {
+            --gold: #ffd700;
+            --neon: #00ffaa;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background: radial-gradient(circle at center, #1a0033, #0a001a);
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .background {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.9)), 
+                        url('https://images.unsplash.com/photo-1518684079-3c1c2c3c3c3c') center/cover no-repeat;
+            z-index: -2;
+            filter: brightness(0.85);
+        }
+
+        /* NAVIGATION */
+        header {
+            background: rgba(10, 0, 25, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 3px solid var(--gold);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .navbar {
+            max-width: 1300px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 25px;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.1rem;
+            background: linear-gradient(90deg, #ffd700, #ffea80, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--gold);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background: var(--gold);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .balance {
+            background: rgba(0, 255, 170, 0.15);
+            border: 2px solid var(--neon);
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.4);
+        }
+
+        .user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            padding: 6px 14px;
+            border-radius: 50px;
+        }
+
+        /* HERO */
+        .hero {
+            text-align: center;
+            padding: 60px 20px 40px;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4.2rem;
+            margin: 0;
+            background: linear-gradient(90deg, #ffd700, #ffea80, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 60px #ffd700, 0 0 100px #ff00ff;
+        }
+
+        .tagline {
+            font-size: 1.4rem;
+            margin: 15px 0 30px;
+            opacity: 0.9;
+        }
+
+        /* MAIN CONTENT */
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            position: relative; 
+            z-index: 2; 
+        }
+
+        .tabs {
+            display: flex; 
+            justify-content: center; 
+            gap: 15px; 
+            margin: 40px 0; 
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 16px 40px;
+            font-size: 1.35rem;
+            background: rgba(40,20,80,0.9);
+            border: 3px solid #ffd700;
+            border-radius: 50px;
+            color: #ffd700;
+            cursor: pointer;
+            transition: all 0.4s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tab.active, .tab:hover {
+            background: linear-gradient(#ffd700, #ffea80);
+            color: #000;
+            transform: scale(1.08);
+            box-shadow: 0 10px 40px rgba(255,215,0,0.8);
+        }
+
+        .game {
+            display: none;
+            background: rgba(15,5,40,0.96);
+            border: 4px solid #ffd700;
+            border-radius: 24px;
+            padding: 40px;
+            margin-top: 20px;
+            box-shadow: 0 0 60px rgba(255,215,0,0.6);
+        }
+
+        .game.active { 
+            display: block; 
+            animation: glow 3s infinite alternate; 
+        }
+
+        @keyframes glow { 
+            from { box-shadow: 0 0 40px rgba(255,215,0,0.5); } 
+            to { box-shadow: 0 0 80px rgba(255,215,0,0.9); } 
+        }
+
+        /* SLOTS */
+        .reel-container {
+            display: flex; 
+            justify-content: center; 
+            gap: 30px; 
+            margin: 35px 0; 
+            padding: 30px;
+            background: linear-gradient(#111, #000);
+            border: 8px solid #ffd700;
+            border-radius: 20px;
+        }
+
+        .reel {
+            font-size: 8rem;
+            width: 140px; 
+            height: 170px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            background: #1a0033; 
+            border-radius: 18px;
+            border: 5px solid #ffd700;
+            box-shadow: 0 0 40px #ffd700;
+            transition: all 0.2s;
+        }
+
+        /* Cards */
+        .cards {
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 15px; 
+            margin: 25px 0;
+        }
+
+        .card {
+            width: 95px; 
+            height: 135px;
+            background: white; 
+            color: black;
+            border-radius: 14px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 3rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+            transition: all 0.4s;
+            border: 4px solid #111;
+        }
+
+        .card:hover { 
+            transform: scale(1.15) rotate(6deg); 
+        }
+
+        button {
+            padding: 16px 45px;
+            font-size: 1.45rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-green { 
+            background: linear-gradient(#00ff88, #00cc66); 
+            color: black; 
+            box-shadow: 0 0 30px #00ff88; 
+        }
+
+        .btn-green:hover { 
+            transform: scale(1.1); 
+        }
+
+        .result {
+            font-size: 2rem;
+            min-height: 90px;
+            text-align: center;
+            margin: 25px 0;
+            font-weight: bold;
+        }
+
+        .win { 
+            animation: winFlash 0.6s 6; 
+            color: #00ff00; 
+        }
+
+        @keyframes winFlash { 
+            50% { text-shadow: 0 0 50px #ffff00, 0 0 90px #ff00ff; } 
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            right: 30px;
+            top: 180px;
+            width: 260px;
+            background: rgba(20,5,50,0.9);
+            border: 3px solid var(--gold);
+            border-radius: 20px;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .jackpot {
+            text-align: center;
+            background: linear-gradient(45deg, #ff00aa, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.8rem;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            opacity: 0.7;
+            font-size: 0.95rem;
+        }
+
+        /* Music Controls */
+        .music-control {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(0,0,0,0.8);
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: 2px solid var(--gold);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+        }
+    </style>
+  <title>Casino</title>
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7wn46oPC90ZXh0Pjwvc3ZnPg==">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Casino">
+  <meta property="og:image" content="https://deploy.ohg.marwitz.dev/mokhtar/casino/og-image.png">
+  <meta property="og:image:width" content="780">
+  <meta property="og:image:height" content="1688">
+  <link rel="manifest" href="manifest.json">
+  <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }</script>
+</head>
+<body>
+    <div class="background"></div>
+
+    <!-- NAVIGATION -->
+    <header>
+        <div class="navbar">
+            <div class="logo">
+                ★ LUXOR CASINO ★
+            </div>
+            
+            <ul class="nav-links">
+                <li><a href="#" onclick="showGame(0)">🎰 Slots</a></li>
+                <li><a href="#" onclick="showGame(1)">🃏 Tischspiele</a></li>
+                <li><a href="#">🔥 Promotions</a></li>
+                <li><a href="#">👑 VIP Club</a></li>
+                <li><a href="#">🏆 Turniere</a></li>
+            </ul>
+
+            <div class="nav-right">
+                <div class="balance" id="navBalance">
+                    <span>💎</span> 
+                    <span id="balance">5000</span>
+                </div>
+                <div class="user">
+                    <span style="font-size:1.5rem;">👑</span>
+                    <div>
+                        <strong>Willkommen, LuxorVIP</strong><br>
+                        <small>Level 12</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <div class="hero">
+        <h1>WILLKOMMEN IM LUXOR</h1>
+        <p class="tagline">Wo Glück auf dich wartet – 24/7 • Sichere Zahlungen • Sofortauszahlung</p>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="showGame(0)">🎰 MEGA SLOTS</button>
+            <button class="tab" onclick="showGame(1)">🃏 Blackjack</button>
+            <button class="tab" onclick="showGame(2)">♠️ Texas Hold'em</button>
+        </div>
+
+        <!-- SLOTS -->
+        <div id="game0" class="game active">
+            <h2 style="text-align:center;color:#ffd700;font-size:2.4rem;">🎰 MEGA SLOTS 🎰</h2>
+            <div class="reel-container" id="reels">
+                <div class="reel">🍒</div>
+                <div class="reel">🍋</div>
+                <div class="reel">⭐</div>
+            </div>
+            <div style="text-align:center;">
+                <input type="number" id="betSlots" value="100" min="10" max="5000" style="width:220px;padding:15px;font-size:1.3rem;text-align:center;border-radius:50px;background:#1a0033;color:#fff;border:2px solid #ffd700;">
+                <button class="btn-green" onclick="playSlots()">JETZT DREHEN!</button>
+            </div>
+            <p id="slotsResult" class="result"></p>
+        </div>
+
+        <!-- BLACKJACK -->
+        <div id="game1" class="game">
+            <h2 style="text-align:center;color:#ffd700;font-size:2.4rem;">🃏 BLACKJACK</h2>
+            <div style="text-align:center;margin:20px;">
+                <input type="number" id="betBJ" value="100" min="10" max="5000" style="width:220px;padding:15px;font-size:1.3rem;text-align:center;border-radius:50px;background:#1a0033;color:#fff;border:2px solid #ffd700;">
+                <button class="btn-green" onclick="startBlackjack()">Spiel starten</button>
+            </div>
+            <div id="bjArea" style="display:none;">
+                <h3>Dealer <span id="dealerValue" style="float:right;"></span></h3>
+                <div class="cards" id="dealerCards"></div>
+                <h3>Du <span id="playerValue" style="float:right;"></span></h3>
+                <div class="cards" id="playerCards"></div>
+                <div style="text-align:center;margin-top:30px;">
+                    <button onclick="hit()" style="background:#ff8800;padding:14px 35px;">HIT</button>
+                    <button onclick="stand()" class="btn-green">STAND</button>
+                </div>
+            </div>
+            <p id="bjResult" class="result"></p>
+        </div>
+
+        <!-- TEXAS HOLD'EM -->
+        <div id="game2" class="game">
+            <h2 style="text-align:center;color:#ffd700;font-size:2.4rem;">♠️ TEXAS HOLD'EM</h2>
+            <div style="text-align:center;margin:20px;">
+                <input type="number" id="betTH" value="100" min="10" max="5000" style="width:220px;padding:15px;font-size:1.3rem;text-align:center;border-radius:50px;background:#1a0033;color:#fff;border:2px solid #ffd700;">
+                <button class="btn-green" onclick="playHoldem()">Runde starten</button>
+            </div>
+            <div id="holdemArea" style="display:none;">
+                <h3>Deine Hole Cards</h3>
+                <div class="cards" id="playerHole"></div>
+                <h3>Community Cards</h3>
+                <div class="cards" id="community"></div>
+                <h3>Dealer Hole Cards</h3>
+                <div class="cards" id="dealerHole"></div>
+            </div>
+            <p id="holdemResult" class="result"></p>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h3 style="text-align:center;color:#ffd700;">💰 JACKPOT</h3>
+        <div class="jackpot" id="jackpot">1.248.920 €</div>
+        <p style="text-align:center;margin-top:20px;font-size:0.95rem;">Letzte Gewinner</p>
+        <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;margin-top:10px;">
+            <small>maxi87 → 42.800 € (Slots)</small><br>
+            <small>QueenOfHearts → 18.500 € (BJ)</small><br>
+            <small>LuckyLuca → 125.000 € (Hold'em)</small>
+        </div>
+    </div>
+
+    <!-- MUSIC CONTROL -->
+    <div class="music-control">
+        <span>🎵</span>
+        <button onclick="toggleMusic()" id="musicBtn" style="background:none;border:none;color:white;font-size:1.1rem;cursor:pointer;">Pause Musik</button>
+    </div>
+
+    <footer>
+        © 2026 LUXOR CASINO • Verantwortungsvolles Spielen • 18+ • Nur zum Spaß
+    </footer>
+
+    <audio id="bgMusic" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        let balance = 5000;
+        let musicPlaying = true;
+
+        function updateBalance() {
+            document.getElementById("balance").textContent = balance;
+            document.getElementById("navBalance").querySelector('span:last-child').textContent = balance;
+        }
+
+        function showGame(n) {
+            document.querySelectorAll('.game').forEach(g => g.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('game' + n).classList.add('active');
+            document.querySelectorAll('.tab')[n].classList.add('active');
+        }
+
+        // ==================== SLOTS ====================
+        const symbols = ["🍒", "🍋", "🍊", "⭐", "🔔", "💎", "7️⃣", "🌟", "🍉", "🃏"];
+        
+        function playSlots() {
+            const bet = parseInt(document.getElementById("betSlots").value);
+            if (bet > balance || bet < 10) return alert("Ungültiger Einsatz!");
+            balance -= bet;
+            updateBalance();
+
+            const reels = document.querySelectorAll('.reel');
+            const resultEl = document.getElementById("slotsResult");
+            resultEl.textContent = "";
+
+            reels.forEach((reel, i) => {
+                let spins = 0;
+                const interval = setInterval(() => {
+                    reel.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                    spins++;
+                    if (spins > 18 + i * 6) {
+                        clearInterval(interval);
+                        if (i === 2) finishSlots(bet, reels, resultEl);
+                    }
+                }, 65);
+            });
+        }
+
+        function finishSlots(bet, reels, resultEl) {
+            const r = Array.from(reels).map(r => r.textContent);
+            let win = 0;
+            if (r[0] === r[1] && r[1] === r[2]) win = bet * 40;
+            else if (r[0] === r[1] || r[1] === r[2] || r[0] === r[2]) win = bet * 8;
+
+            balance += win;
+            updateBalance();
+
+            if (win > 0) {
+                resultEl.innerHTML = `🎉 MEGA GEWINN! +${win} 💎`;
+                resultEl.classList.add('win');
+                createConfetti(180);
+            } else {
+                resultEl.textContent = "😢 Versuch's nochmal... Viel Glück!";
+            }
+        }
+
+        function createConfetti(count) {
+            for (let i = 0; i < count; i++) {
+                const c = document.createElement('div');
+                c.textContent = ['🎉','✨','💎','⭐','🃏','🍒'][Math.floor(Math.random()*6)];
+                c.style.position = 'fixed';
+                c.style.left = Math.random() * 100 + 'vw';
+                c.style.top = '-30px';
+                c.style.fontSize = (25 + Math.random() * 35) + 'px';
+                c.style.zIndex = 9999;
+                c.style.animation = `fall ${2.5 + Math.random() * 3}s linear forwards`;
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 8000);
+            }
+        }
+
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes fall { to { transform: translateY(120vh) rotate(800deg); } }`;
+        document.head.appendChild(style);
+
+        // ==================== BLACKJACK & HOLD'EM (unchanged but improved) ====================
+        // ... (Your original blackjack and holdem functions remain the same - I kept them for brevity)
+        let deck, playerHand, dealerHand, bjBet;
+
+        function createDeck() {
+            const suits = ['♥','♦','♣','♠'];
+            const ranks = [2,3,4,5,6,7,8,9,10,'J','Q','K','A'];
+            let d = [];
+            for (let suit of suits) for (let rank of ranks) d.push({rank, suit});
+            return d.sort(() => Math.random() - 0.5);
+        }
+
+        function cardValue(card) {
+            if (['J','Q','K'].includes(card.rank)) return 10;
+            if (card.rank === 'A') return 11;
+            return card.rank;
+        }
+
+        function handValue(hand) {
+            let val = hand.reduce((sum, c) => sum + cardValue(c), 0);
+            let aces = hand.filter(c => c.rank === 'A').length;
+            while (val > 21 && aces) { val -= 10; aces--; }
+            return val;
+        }
+
+        function displayCards(containerId, hand, hideFirst = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            hand.forEach((card, i) => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                if (hideFirst && i === 0) {
+                    div.textContent = '🂠';
+                    div.style.background = '#111';
+                    div.style.color = '#fff';
+                } else {
+                    div.textContent = card.rank + card.suit;
+                    if (['♥','♦'].includes(card.suit)) div.style.color = 'red';
+                }
+                container.appendChild(div);
+            });
+        }
+
+        function startBlackjack() {
+            bjBet = parseInt(document.getElementById("betBJ").value);
+            if (bjBet > balance || bjBet < 10) return alert("Ungültiger Einsatz!");
+            balance -= bjBet;
+            updateBalance();
+
+            deck = createDeck();
+            playerHand = [deck.pop(), deck.pop()];
+            dealerHand = [deck.pop(), deck.pop()];
+
+            document.getElementById("bjArea").style.display = "block";
+            document.getElementById("bjResult").textContent = "";
+
+            displayCards("playerCards", playerHand);
+            displayCards("dealerCards", dealerHand, true);
+            document.getElementById("playerValue").textContent = handValue(playerHand);
+            document.getElementById("dealerValue").textContent = cardValue(dealerHand[0]) + " + ?";
+        }
+
+        function hit() {
+            playerHand.push(deck.pop());
+            displayCards("playerCards", playerHand);
+            document.getElementById("playerValue").textContent = handValue(playerHand);
+            if (handValue(playerHand) > 21) endBlackjack(false);
+        }
+
+        function stand() {
+            while (handValue(dealerHand) < 17) dealerHand.push(deck.pop());
+            displayCards("dealerCards", dealerHand);
+            const pVal = handValue(playerHand);
+            const dVal = handValue(dealerHand);
+            document.getElementById("dealerValue").textContent = dVal;
+
+            if (dVal > 21 || pVal > dVal) endBlackjack(true);
+            else if (pVal === dVal) endBlackjack(null);
+            else endBlackjack(false);
+        }
+
+        function endBlackjack(won) {
+            if (won === true) balance += bjBet * 2;
+            const resultEl = document.getElementById("bjResult");
+            resultEl.textContent = won === true ? "🎉 DU HAST GEWONNEN!" : won === null ? "🤝 Unentschieden" : "😔 Dealer gewinnt";
+            if (won === true) {
+                resultEl.classList.add('win');
+                createConfetti(100);
+            }
+            setTimeout(() => {
+                document.getElementById("bjArea").style.display = "none";
+                updateBalance();
+            }, 2800);
+        }
+
+        // Hold'em (simplified as before)
+        function playHoldem() {
+            const bet = parseInt(document.getElementById("betTH").value);
+            if (bet > balance || bet < 10) return alert("Ungültiger Einsatz!");
+            balance -= bet;
+            updateBalance();
+
+            const suits = ['♥','♦','♣','♠'];
+            const ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+            let deck = [];
+            for (let s of suits) for (let r of ranks) deck.push(r + s);
+            deck.sort(() => Math.random() - 0.5);
+
+            const playerHole = [deck.pop(), deck.pop()];
+            const dealerHole = [deck.pop(), deck.pop()];
+            const community = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+
+            displayHoldemCards("playerHole", playerHole);
+            displayHoldemCards("community", community);
+            displayHoldemCards("dealerHole", dealerHole, true);
+            document.getElementById("holdemArea").style.display = "block";
+
+            const playerScore = evaluateHand(playerHole.concat(community));
+            const dealerScore = evaluateHand(dealerHole.concat(community));
+
+            let resultText = "";
+            if (playerScore > dealerScore) {
+                balance += Math.floor(bet * 2.8);
+                resultText = "🎉 DU GEWINNST DIE RUNDE!";
+                createConfetti(140);
+            } else if (dealerScore > playerScore) {
+                resultText = "😔 Dealer gewinnt diese Runde.";
+            } else {
+                balance += bet;
+                resultText = "🤝 Unentschieden – Einsatz zurück!";
+            }
+
+            document.getElementById("holdemResult").innerHTML = resultText;
+            updateBalance();
+        }
+
+        function displayHoldemCards(id, cards, hidden = false) {
+            const container = document.getElementById(id);
+            container.innerHTML = '';
+            cards.forEach((c, i) => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                if (hidden && i < 1) {
+                    div.textContent = '🂠';
+                    div.style.background = '#111';
+                    div.style.color = '#fff';
+                } else {
+                    div.textContent = c;
+                    if (c.includes('♥') || c.includes('♦')) div.style.color = 'red';
+                }
+                container.appendChild(div);
+            });
+        }
+
+        function evaluateHand(hand) {
+            const values = hand.map(c => c.slice(0, -1));
+            const counts = {};
+            values.forEach(v => counts[v] = (counts[v] || 0) + 1);
+            const pairs = Object.values(counts).filter(c => c >= 2).length;
+            if (pairs >= 2) return 4;
+            if (pairs === 1) return 2;
+            return 1;
+        }
+
+        // Music
+        const audio = document.getElementById("bgMusic");
+        audio.volume = 0.35;
+
+        function toggleMusic() {
+            const btn = document.getElementById("musicBtn");
+            if (musicPlaying) {
+                audio.pause();
+                btn.textContent = "▶ Musik abspielen";
+            } else {
+                audio.play();
+                btn.textContent = "⏸ Musik pausieren";
+            }
+            musicPlaying = !musicPlaying;
+        }
+
+        // Auto play music (user gesture required in most browsers)
+        document.addEventListener('click', () => {
+            if (audio.paused) audio.play().catch(() => {});
+        }, { once: true });
+
+        // Initialize
+        updateBalance();
+        
+        // Fake jackpot animation
+        setInterval(() => {
+            const jp = document.getElementById("jackpot");
+            let val = parseInt(jp.textContent.replace(/[^0-9]/g,''));
+            val += Math.floor(Math.random() * 800) + 200;
+            jp.textContent = val.toLocaleString('de-DE') + " €";
+        }, 4500);
+    </script>
+</body>
+</html>

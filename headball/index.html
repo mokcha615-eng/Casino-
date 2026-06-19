@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<style>
+    body { margin:0; background:#0a1f0a; font-family:Arial; color:white; text-align:center; overflow:hidden; }
+    canvas { display:block; margin:10px auto; border:6px solid #fff; border-radius:12px; box-shadow:0 0 30px rgba(255,255,255,0.3); }
+    #ui { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+    button { pointer-events:auto; padding:12px 28px; font-size:22px; margin:8px; background:#ff0; color:#000; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+    button:hover { background:#ff0; transform:scale(1.05); }
+    .menu { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.85); padding:30px; border-radius:15px; }
+</style>
+  <title>headball</title>
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7wn6epPC90ZXh0Pjwvc3ZnPg==">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="headball">
+  <meta property="og:image" content="https://deploy.ohg.marwitz.dev/mokhtar/headball/og-image.png">
+  <meta property="og:image:width" content="780">
+  <meta property="og:image:height" content="1688">
+  <link rel="manifest" href="manifest.json">
+  <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }</script>
+</head>
+<body>
+<h1 style="margin:10px; color:#ff0; text-shadow:0 0 15px #ff0;">⚽ HEADBALL PRO ⚽</h1>
+
+<div id="ui">
+    <div id="menu" class="menu">
+        <h2>Hauptmenü</h2>
+        <button onclick="startGame(false)">2 Spieler (Lokal)</button><br>
+        <button onclick="startGame(true)">Gegen KI</button><br>
+        <button onclick="showSkins()">Skins</button>
+    </div>
+
+    <div id="skinMenu" class="menu" style="display:none;">
+        <h2>Skins wählen</h2>
+        <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap;">
+            <div onclick="selectSkin(0)" style="cursor:pointer; text-align:center;">
+                <div style="width:60px;height:80px;background:#e74c3c;margin:auto;border-radius:8px;"></div>
+                <p>Classic Rot</p>
+            </div>
+            <div onclick="selectSkin(1)" style="cursor:pointer; text-align:center;">
+                <div style="width:60px;height:80px;background:#3498db;margin:auto;border-radius:8px;"></div>
+                <p>Classic Blau</p>
+            </div>
+            <div onclick="selectSkin(2)" style="cursor:pointer; text-align:center;">
+                <div style="width:60px;height:80px;background:#f1c40f;margin:auto;border-radius:8px;"></div>
+                <p>Gold</p>
+            </div>
+            <div onclick="selectSkin(3)" style="cursor:pointer; text-align:center;">
+                <div style="width:60px;height:80px;background:#9b59b6;margin:auto;border-radius:8px;"></div>
+                <p>Violet</p>
+            </div>
+        </div>
+        <button onclick="hideSkins()">Zurück</button>
+    </div>
+
+    <div id="info" style="position:absolute; top:10px; left:0; width:100%; font-size:18px; pointer-events:none;">
+        <span id="scoreDisplay">0 : 0</span>
+    </div>
+</div>
+
+<canvas id="game" width="900" height="480"></canvas>
+
+<script>
+// =============== HEADBALL PRO ===============
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+let ball, p1, p2, score1 = 0, score2 = 0, gameOver = false;
+let keys = {}, particles = [], aiEnabled = false;
+let skin1 = 0, skin2 = 1; // Skin Index
+
+class Player {
+    constructor(x, color, skin) {
+        this.x = x;
+        this.y = 320;
+        this.width = 42;
+        this.height = 75;
+        this.velX = 0;
+        this.velY = 0;
+        this.color = color;
+        this.skin = skin;
+        this.onGround = true;
+        this.frame = 0;
+    }
+}
+
+class Ball {
+    constructor() {
+        this.reset();
+    }
+    reset() {
+        this.x = 450;
+        this.y = 200;
+        this.radius = 20;
+        this.velX = 0;
+        this.velY = 0;
+    }
+}
+
+function resetPositions() {
+    ball = new Ball();
+    p1 = new Player(250, "#e74c3c", skin1);
+    p2 = new Player(650, "#3498db", skin2);
+}
+
+resetPositions();
+
+const gravity = 0.85;
+const friction = 0.88;
+
+// Steuerung
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
+
+// Partikel System
+function createParticles(x, y, count, color) {
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x, y,
+            velX: Math.random()*12 - 6,
+            velY: Math.random()*12 - 10,
+            life: 30 + Math.random()*20,
+            color
+        });
+    }
+}
+
+// Skins
+const skins = ["#e74c3c","#3498db","#f1c40f","#9b59b6","#2ecc71","#e67e22"];
+
+function selectSkin(n) {
+    if (confirm("Skin für Spieler 1 (Rot) setzen?")) skin1 = n;
+    else skin2 = n;
+}
+
+// Menüs
+function startGame(ai) {
+    aiEnabled = ai;
+    score1 = score2 = 0;
+    gameOver = false;
+    resetPositions();
+    document.getElementById("menu").style.display = "none";
+}
+
+function showSkins() {
+    document.getElementById("menu").style.display = "none";
+    document.getElementById("skinMenu").style.display = "block";
+}
+
+function hideSkins() {
+    document.getElementById("skinMenu").style.display = "none";
+    document.getElementById("menu").style.display = "block";
+}
+
+// Update
+function update() {
+    if (gameOver) return;
+
+    // Spieler 1
+    p1.velX = 0;
+    if (keys['a'] || keys['A']) p1.velX = -8;
+    if (keys['d'] || keys['D']) p1.velX = 8;
+    if ((keys['w'] || keys['W']) && p1.onGround) {
+        p1.velY = -19;
+        createParticles(p1.x+20, p1.y+70, 8, "#fff");
+    }
+
+    // Spieler 2
+    p2.velX = 0;
+    if (keys['ArrowLeft']) p2.velX = -8;
+    if (keys['ArrowRight']) p2.velX = 8;
+    if (keys['ArrowUp'] && p2.onGround) {
+        p2.velY = -19;
+        createParticles(p2.x+20, p2.y+70, 8, "#fff");
+    }
+
+    // KI
+    if (aiEnabled) {
+        if (ball.x > p2.x + 25) p2.velX = 7.5;
+        if (ball.x < p2.x - 25) p2.velX = -7.5;
+        if (ball.y < 220 && Math.random() < 0.35 && p2.onGround) p2.velY = -18;
+    }
+
+    // Physik Spieler
+    [p1, p2].forEach(p => {
+        p.velY += gravity;
+        p.x += p.velX;
+        p.y += p.velY;
+
+        if (p.y >= 320) {
+            p.y = 320;
+            p.velY = 0;
+            p.onGround = true;
+        } else p.onGround = false;
+
+        p.x = Math.max(40, Math.min(860, p.x));
+    });
+
+    // Ball Physik
+    ball.velY += gravity * 0.75;
+    ball.x += ball.velX;
+    ball.y += ball.velY;
+    ball.velX *= 0.982;
+
+    // Kollision Ball-Boden
+    if (ball.y > 400) {
+        ball.y = 400;
+        ball.velY = -ball.velY * 0.78;
+        ball.velX *= 0.92;
+        createParticles(ball.x, 400, 12, "#fff");
+    }
+    if (ball.y < 40) ball.velY = -ball.velY * 0.85;
+
+    // Tore
+    if (ball.x < 50 && ball.y > 220) {
+        score2++;
+        goalScored(2);
+    }
+    if (ball.x > 850 && ball.y > 220) {
+        score1++;
+        goalScored(1);
+    }
+
+    // Spieler-Ball Kollision (verbessert)
+    [p1, p2].forEach(player => {
+        const dx = ball.x - (player.x + 21);
+        const dy = ball.y - (player.y + 32);
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < ball.radius + 38) {
+            const angle = Math.atan2(dy, dx);
+            const power = 15;
+            ball.velX = Math.cos(angle) * power + player.velX * 0.6;
+            ball.velY = Math.sin(angle) * -power * 0.95;
+            createParticles(ball.x, ball.y, 18, player.color);
+        }
+    });
+
+    // Mittellinie Bounce
+    if (Math.abs(ball.x - 450) < 12 && ball.y > 180) {
+        ball.velX *= -1.12;
+    }
+
+    // Partikel Update
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.velX;
+        p.y += p.velY;
+        p.velY += 0.6;
+        p.life--;
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    document.getElementById("scoreDisplay").textContent = `${score1} : ${score2}`;
+    checkWin();
+}
+
+function goalScored(player) {
+    createParticles(ball.x, ball.y, 40, "#ff0");
+    resetPositions();
+    if (score1 >= 7 || score2 >= 7) gameOver = true;
+}
+
+function checkWin() {
+    if (score1 >= 7 || score2 >= 7) gameOver = true;
+}
+
+// Zeichnen
+function draw() {
+    // Hintergrund
+    ctx.fillStyle = "#0a3d0a";
+    ctx.fillRect(0, 0, 900, 480);
+
+    // Tribüne
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, 0, 900, 140);
+
+    // Rasen
+    ctx.fillStyle = "#0b7e3a";
+    ctx.fillRect(0, 140, 900, 340);
+
+    // Linien
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(450, 140);
+    ctx.lineTo(450, 480);
+    ctx.stroke();
+
+    // Tore
+    ctx.fillStyle = "#222";
+    ctx.fillRect(0, 220, 55, 200);
+    ctx.fillRect(845, 220, 55, 200);
+
+    // Netz-Effekt
+    ctx.strokeStyle = "#ddd";
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        ctx.moveTo(55, 220 + i*25);
+        ctx.lineTo(0, 220 + i*30);
+        ctx.stroke();
+    }
+    for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        ctx.moveTo(845, 220 + i*25);
+        ctx.lineTo(900, 220 + i*30);
+        ctx.stroke();
+    }
+
+    // Spieler zeichnen (mit Skin)
+    [p1, p2].forEach(p => {
+        const bob = Math.sin(p.frame++ * 0.2) * 2;
+        
+        // Körper
+        ctx.fillStyle = skins[p.skin];
+        ctx.fillRect(p.x, p.y + 20 + bob, p.width, p.height - 25);
+        
+        // Beine
+        ctx.fillStyle = "#222";
+        ctx.fillRect(p.x + 8, p.y + 65, 12, 18);
+        ctx.fillRect(p.x + 22, p.y + 65, 12, 18);
+        
+        // Kopf
+        ctx.fillStyle = "#ffdbac";
+        ctx.beginPath();
+        ctx.arc(p.x + 21, p.y + 25 + bob, 19, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Augen
+        ctx.fillStyle = "#000";
+        ctx.beginPath();
+        ctx.arc(p.x + 15, p.y + 22, 4, 0, Math.PI*2);
+        ctx.arc(p.x + 27, p.y + 22, 4, 0, Math.PI*2);
+        ctx.fill();
+    });
+
+    // Ball mit Glanz
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "white";
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+    ctx.stroke();
+
+    // Partikel
+    particles.forEach(p => {
+        ctx.globalAlpha = p.life / 40;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 6, 6);
+    });
+    ctx.globalAlpha = 1;
+
+    // Score
+    ctx.fillStyle = "white";
+    ctx.font = "bold 52px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(score1, 300, 90);
+    ctx.fillText(score2, 600, 90);
+
+    if (gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.8)";
+        ctx.fillRect(0, 0, 900, 480);
+        ctx.fillStyle = "#ff0";
+        ctx.font = "bold 60px Arial";
+        ctx.fillText(score1 > score2 ? "ROT GEWINNT! 🏆" : "BLAU GEWINNT! 🏆", 450, 240);
+    }
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
+
+// Hotkeys
+window.addEventListener("keydown", e => {
+    if (e.key.toLowerCase() === 'r') {
+        score1 = score2 = 0;
+        gameOver = false;
+        resetPositions();
+    }
+    if (e.key.toLowerCase() === 'm') {
+        document.getElementById("menu").style.display = "block";
+    }
+});
+</script>
+
+<p style="color:#aaa; margin-top:8px;">
+    <b>A/D + W</b> | <b>←→↑</b> • <b>R</b> = Neustart • <b>M</b> = Menü
+</p>
+</body>
+</html>// Ersetze deine bestehende 'update' Funktion durch diese Logik
+let lastTime = performance.now();
+function update() {
+    if (gameOver) return;
+    // Delta-Time Berechnung für konstante Geschwindigkeit
+    const now = performance.now();
+    const dt = Math.min((now - lastTime) / 16.66, 2); // Begrenzt auf max. 2x Speed bei Lag
+    lastTime = now;
+    // --- Spielerbewegung mit dt ---
+    [p1, p2].forEach((p, index) => {
+        // KI Logik verbessert
+        if (index === 1 && aiEnabled) {
+            const errorMargin = 20;
+            if (ball.x > p.x + errorMargin) p.velX = 6;
+            else if (ball.x < p.x - errorMargin) p.velX = -6;
+            else p.velX = 0;
+            // KI Sprung-Logik
+            if (ball.y < 250 && Math.random() < 0.05 && p.onGround) p.velY = -18;
+        } else {
+            // Manuelle Steuerung (Key-Inputs)
+            p.velX = 0;
+            if (index === 0) {
+                if (keys['a']) p.velX = -8;
+                if (keys['d']) p.velX = 8;
+                if (keys['w'] && p.onGround) p.velY = -18;
+            } else {
+                if (keys['ArrowLeft']) p.velX = -8;
+                if (keys['ArrowRight']) p.velX = 8;
+                if (keys['ArrowUp'] && p.onGround) p.velY = -18;
+            }
+        }
+        // Physik Anwendung
+        p.velY += gravity * dt;
+        p.x += p.velX * dt;
+        p.y += p.velY * dt;
+        if (p.y >= 320) {
+            p.y = 320;
+            p.velY = 0;
+            p.onGround = true;
+        } else {
+            p.onGround = false;
+        }
+        p.x = Math.max(40, Math.min(860, p.x));
+    });
+    // Ball Physik
+    ball.velY += (gravity * 0.75) * dt;
+    ball.x += ball.velX * dt;
+    ball.y += ball.velY * dt;
+    // Einfache Kollision mit Wänden
+    if (ball.x < ball.radius || ball.x > 900 - ball.radius) ball.velX *= -0.8;
+    if (ball.y < ball.radius) ball.velY *= -0.8;
+    // Bodenkontakt
+    if (ball.y > 400) {
+        ball.y = 400;
+        ball.velY = -ball.velY * 0.7;
+    }
+    // ... (restliche Kollisionslogik beibehalten)
+}// Spieler-Ball Kollision (Verbessert)
+[p1, p2].forEach((player, index) => {
+    const dx = ball.x - (player.x + player.width / 2);
+    const dy = ball.y - (player.y + player.height / 2);
+    const dist = Math.hypot(dx, dy);
+    if (dist < ball.radius + 35) { // Kollisionsradius
+        // Normalenvektor berechnen
+        const angle = Math.atan2(dy, dx);
+        // Stärke des Kicks
+        const power = 16; 
+        // LOGIK-KORREKTUR: 
+        // Wir zwingen den Ball je nach Spieler-Seite in die richtige Richtung
+        // Spieler 1 (Links) schießt nach rechts, Spieler 2 (Rechts) nach links
+        const directionBias = (index === 0) ? 1 : -1;
+        // Berechne neue Geschwindigkeit
+        ball.velX = (Math.cos(angle) * power) + (directionBias * 5); 
+        ball.velY = (Math.sin(angle) * power) - 5; // Kleiner Bonus nach oben
+        // Anti-Stuck: Ball leicht vom Spieler wegsetzen
+        ball.x += Math.cos(angle) * 5;
+        ball.y += Math.sin(angle) * 5;
+        createParticles(ball.x, ball.y, 10, player.color);
+    }
+});

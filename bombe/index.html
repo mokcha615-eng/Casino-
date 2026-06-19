@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0d;color:#ccc;font-family:'Segoe UI',monospace;min-height:100vh}
+header{background:#111;border-bottom:1px solid #1a1a1a;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+header h1{font-size:16px;font-weight:600;color:#fff;letter-spacing:.5px}
+header span{font-size:12px;color:#555}
+.toolbar{background:#161616;border-bottom:1px solid #1a1a1a;padding:10px 24px;display:flex;gap:10px;align-items:center;position:sticky;top:53px;z-index:9}
+.btn{padding:6px 16px;font-size:12px;font-weight:600;border-radius:5px;cursor:pointer;border:none;letter-spacing:.5px;transition:all .15s}
+.btn-copy{background:#1e3a1e;color:#0f0;border:1px solid #0a0}
+.btn-copy:hover{background:#0a0;color:#000}
+.btn-dl{background:#1a1a2e;color:#88f;border:1px solid #446}
+.btn-dl:hover{background:#446;color:#fff}
+.line-count{font-size:11px;color:#444;margin-left:auto}
+pre{display:flex;overflow-x:auto}
+.line-numbers{padding:24px 0 24px 0;background:#111;border-right:1px solid #1a1a1a;min-width:54px;text-align:right;select:none;user-select:none}
+.line-numbers span{display:block;padding:0 14px;font-size:13px;line-height:1.65;color:#333;font-family:'Consolas','Courier New',monospace}
+code{display:block;padding:24px 28px;font-size:13px;line-height:1.65;font-family:'Consolas','Courier New',monospace;white-space:pre;flex:1;min-width:0}
+.kw{color:#c792ea}
+.fn{color:#82aaff}
+.str{color:#c3e88d}
+.num{color:#f78c6c}
+.cmt{color:#546e7a;font-style:italic}
+.tag{color:#f07178}
+.attr{color:#ffcb6b}
+.punct{color:#89ddff}
+.var{color:#eeffff}
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#0a0;color:#000;font-weight:700;font-size:13px;padding:10px 24px;border-radius:8px;opacity:0;transition:opacity .3s;pointer-events:none}
+</style>
+
+  <title>bombe</title>
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7wn6aEPC90ZXh0Pjwvc3ZnPg==">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="bombe">
+  <meta property="og:image" content="https://deploy.ohg.marwitz.dev/mokhtar/bombe/og-image.png">
+  <meta property="og:image:width" content="780">
+  <meta property="og:image:height" content="1688">
+  <link rel="manifest" href="manifest.json">
+  <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }</script>
+</head>
+<body>
+<header>
+  <h1>&#128163; Bomb Defuser 3D &mdash; Quellcode</h1>
+  <span>BombDefuser3D.html</span>
+</header>
+<div class="toolbar">
+  <button class="btn btn-copy" onclick="copyCode()">&#128203; Code kopieren</button>
+  <button class="btn btn-dl" onclick="downloadGame()">&#11123; Spiel herunterladen</button>
+  <span class="line-count" id="lineCount"></span>
+</div>
+<pre id="pre">
+<div class="line-numbers" id="lineNums"></div>
+<code id="codeBlock"></code>
+</pre>
+<div id="toast">&#10003; Kopiert!</div>
+
+<script>
+const RAW = `<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bomb Defuser 3D</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"><\/script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a0a;color:#0f0;overflow:hidden;user-select:none}
+#menu,#game,#minigame,#shop,#leaderboard,#gameover{position:absolute;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;justify-content:center;align-items:center}
+#menu{display:flex;background:radial-gradient(ellipse at center,#0d1f0d 0%,#000 70%)}
+.menu-title{font-size:clamp(28px,5vw,56px);font-weight:900;letter-spacing:4px;text-shadow:0 0 30px #0f0,0 0 60px #0a0;margin-bottom:8px;text-align:center}
+.menu-sub{font-size:14px;color:#0a0;letter-spacing:2px;margin-bottom:40px;text-align:center}
+.menu-btn{margin:6px;padding:13px 36px;font-size:16px;font-weight:700;letter-spacing:1px;background:transparent;color:#0f0;border:1.5px solid #0f0;border-radius:6px;cursor:pointer;transition:all .15s;min-width:220px}
+.menu-btn:hover{background:#0f0;color:#000;box-shadow:0 0 20px #0f0}
+.menu-btn.secondary{border-color:#0a0;color:#0a0;font-size:14px}
+.menu-btn.secondary:hover{background:#0a0;color:#000}
+#game{background:#000}
+canvas{display:block;position:absolute;top:0;left:0}
+.hud{position:absolute;top:0;left:0;right:0;padding:12px 20px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:10}
+.hud-left,.hud-right{background:rgba(0,0,0,.75);border:1px solid #0a0;border-radius:8px;padding:10px 16px;backdrop-filter:blur(4px)}
+.hud-row{font-size:13px;color:#0a0;line-height:1.8}
+.hud-val{color:#0f0;font-weight:700}
+.hud-timer{font-size:22px;font-weight:900;color:#0f0;text-shadow:0 0 10px #0f0}
+.hud-timer.danger{color:#f00;text-shadow:0 0 10px #f00;animation:blink .5s infinite}
+@keyframes blink{50%{opacity:.4}}
+.crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:24px;pointer-events:none;z-index:5}
+.crosshair::before,.crosshair::after{content:'';position:absolute;background:#0f0;opacity:.85}
+.crosshair::before{width:2px;height:100%;left:50%;transform:translateX(-50%)}
+.crosshair::after{width:100%;height:2px;top:50%;transform:translateY(-50%)}
+.crosshair-dot{position:absolute;top:50%;left:50%;width:4px;height:4px;background:#0f0;border-radius:50%;transform:translate(-50%,-50%)}
+#lockPrompt{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);border:1px solid #0a0;border-radius:8px;padding:10px 24px;font-size:13px;color:#0a0;letter-spacing:1px;pointer-events:none;transition:opacity .5s}
+#bombRadar{position:absolute;bottom:20px;right:20px;width:120px;height:120px;pointer-events:none;z-index:10}
+#radarCanvas{display:block;border-radius:50%}
+#minigame{background:rgba(0,0,0,.97);z-index:20}
+.mini-box{background:#0d1a0d;border:2px solid #0a0;border-radius:14px;padding:36px 48px;text-align:center;max-width:560px;width:90%}
+.mini-title{font-size:26px;font-weight:700;color:#0f0;margin-bottom:6px;letter-spacing:2px}
+.mini-sub{font-size:13px;color:#0a0;margin-bottom:28px}
+.wire-btn{width:80px;height:160px;font-size:14px;font-weight:700;border:3px solid rgba(255,255,255,.2);border-radius:10px;cursor:pointer;letter-spacing:1px;transition:transform .1s,border-color .1s;color:#fff}
+.wire-btn:hover{transform:scale(1.06);border-color:#fff}
+.code-display{font-size:70px;font-weight:900;color:#0f0;text-shadow:0 0 20px #0f0;letter-spacing:12px;margin:20px 0}
+.code-input{background:transparent;border:none;border-bottom:2px solid #0a0;color:#0f0;font-size:36px;font-weight:700;text-align:center;width:160px;letter-spacing:8px;outline:none}
+.seq-btn{width:60px;height:60px;font-size:24px;font-weight:700;background:#001a00;border:2px solid #0a0;border-radius:8px;color:#0f0;cursor:pointer;transition:all .15s}
+.seq-btn:hover{background:#0a0;color:#000}
+.seq-btn.active{background:#0f0;color:#000;box-shadow:0 0 15px #0f0}
+.seq-btn.wrong{background:#f00;border-color:#f00}
+.action-btn{margin:8px;padding:12px 28px;font-size:15px;font-weight:700;background:transparent;color:#0f0;border:1.5px solid #0f0;border-radius:6px;cursor:pointer;transition:all .15s;letter-spacing:1px}
+.action-btn:hover{background:#0f0;color:#000}
+.action-btn.cancel{border-color:#f00;color:#f00}
+.action-btn.cancel:hover{background:#f00;color:#000}
+#shop,#leaderboard,#gameover{background:rgba(0,0,0,.97);z-index:15}
+.panel{background:#0d1a0d;border:2px solid #0a0;border-radius:14px;padding:32px 40px;max-width:700px;width:92%;max-height:85vh;overflow-y:auto}
+.panel-title{font-size:28px;font-weight:700;color:#0f0;margin-bottom:24px;letter-spacing:2px;text-align:center}
+.skin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.skin-card{background:#001a00;border:1.5px solid #0a0;border-radius:10px;padding:14px;cursor:pointer;text-align:center;transition:all .15s}
+.skin-card:hover{border-color:#0f0;background:#003000}
+.skin-card.owned{border-color:#0f0}
+.skin-card.active{border:2px solid #0f0;background:#002800;box-shadow:0 0 12px #0a0}
+.skin-name{font-size:14px;font-weight:700;color:#0f0;margin-bottom:4px}
+.skin-price{font-size:12px;color:#0a0}
+.lb-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #0a0;font-size:15px}
+.lb-row:last-child{border:none}
+.lb-rank{font-size:18px;width:36px;text-align:center;color:#0a0}
+.lb-name{flex:1;padding:0 12px;color:#0f0}
+.lb-score{color:#ff0;font-weight:700}
+.toast{position:absolute;top:80px;left:50%;transform:translateX(-50%);background:#001a00;border:1px solid #0f0;border-radius:8px;padding:10px 24px;font-size:14px;color:#0f0;z-index:30;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="menu">
+  <div class="menu-title">&#128163; BOMB DEFUSER 3D</div>
+  <div class="menu-sub">EGO-PERSPEKTIVE &bull; 4 KAPITEL &bull; 3 MINISPIELE</div>
+  <button class="menu-btn" onclick="startGame()">&#9654; SPIELEN</button>
+  <button class="menu-btn secondary" onclick="showLeaderboard()">&#127942; RANGLISTE</button>
+  <button class="menu-btn secondary" onclick="showShop()">&#128722; SKIN SHOP</button>
+  <div style="margin-top:32px;font-size:12px;color:#050;letter-spacing:1px;text-align:center">
+    WASD = Bewegen &nbsp;&bull;&nbsp; Maus = Umsehen &nbsp;&bull;&nbsp; Klick = Bombe entsch&auml;rfen (&lt;6m)
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game">
+  <canvas id="canvas"></canvas>
+  <div class="hud">
+    <div class="hud-left">
+      <div class="hud-row">Kapitel: <span class="hud-val" id="chapter">Schule</span></div>
+      <div class="hud-row">Level: <span class="hud-val" id="level">1</span></div>
+      <div class="hud-row">Bomben: <span class="hud-val" id="bombs">3</span></div>
+      <div class="hud-row">Coins: <span class="hud-val" id="coins">0</span></div>
+    </div>
+    <div class="hud-right" style="text-align:center">
+      <div style="font-size:11px;color:#0a0;letter-spacing:1px;margin-bottom:2px">ZEIT</div>
+      <div class="hud-timer" id="time">90</div>
+    </div>
+  </div>
+  <div class="crosshair"><div class="crosshair-dot"></div></div>
+  <div id="lockPrompt">Klicken um Maus zu sperren &bull; ESC = Pause</div>
+  <div id="bombRadar">
+    <canvas id="radarCanvas" width="120" height="120"></canvas>
+  </div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<!-- MINIGAME -->
+<div id="minigame">
+  <div class="mini-box" id="miniContent"></div>
+</div>
+
+<!-- SHOP -->
+<div id="shop">
+  <div class="panel">
+    <div class="panel-title">&#128722; SKIN SHOP</div>
+    <div class="skin-grid" id="skinGrid"></div>
+    <div style="text-align:center;margin-top:24px">
+      <button class="action-btn cancel" onclick="closeShop()">ZUR&Uuml;CK</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEADERBOARD -->
+<div id="leaderboard">
+  <div class="panel">
+    <div class="panel-title">&#127942; RANGLISTE</div>
+    <div id="lbList"></div>
+    <div style="text-align:center;margin-top:24px">
+      <button class="action-btn cancel" onclick="closeLeaderboard()">SCHLIESSEN</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameover">
+  <div class="panel" style="text-align:center">
+    <div class="panel-title" id="goTitle">MISSION FEHLGESCHLAGEN</div>
+    <div style="font-size:15px;color:#0a0;margin:16px 0;line-height:1.8" id="goMsg"></div>
+    <button class="action-btn" onclick="startGame()">NOCHMAL</button>
+    <button class="action-btn cancel" onclick="returnMenu()">HAUPTMEN&Uuml;</button>
+  </div>
+</div>
+
+<script>
+let scene, camera, renderer, bombs = [], timeLeft = 90, coins = 0, currentLevel = 1, currentSkin = 0;
+let timerInterval, keys = {}, yaw = 0, pitch = 0, isLocked = false, animId = null;
+let ownedSkins = [0];
+
+const chapters = ["Schule", "Einkaufszentrum", "Fabrik", "Flughafen"];
+const SKINS = [
+  { name: "Anfanger",  price: 0,    color: 0x00aa00 },
+  { name: "SWAT",      price: 500,  color: 0x333333 },
+  { name: "Neon",      price: 1200, color: 0x00ffff },
+  { name: "Cyber",     price: 2500, color: 0xff00ff },
+  { name: "Gold",      price: 5000, color: 0xffcc00 },
+  { name: "Agent X",   price: 9999, color: 0xff4400 }
+];
+const LEADERBOARD = [
+  { name: "H4cker_1337", score: 24500 },
+  { name: "BombQueen",   score: 18200 },
+  { name: "DefuserX",    score: 13800 },
+  { name: "SilentFuse",  score: 9600  },
+  { name: "NitroMike",   score: 7100  }
+];
+
+function show(id) {
+  ['menu','game','minigame','shop','leaderboard','gameover'].forEach(s =>
+    document.getElementById(s).style.display = 'none');
+  document.getElementById(id).style.display = 'flex';
+}
+
+function toast(msg, dur = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.opacity = '1';
+  clearTimeout(t._t); t._t = setTimeout(() => t.style.opacity = '0', dur);
+}
+
+function initThree() {
+  const canvas = document.getElementById('canvas');
+  if (renderer) renderer.dispose();
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  scene = new THREE.Scene();
+  const ci = Math.min(currentLevel - 1, 3);
+  const fogColors = [0x0a1a0a, 0x0a0a1a, 0x1a0a0a, 0x0a0a0a];
+  scene.fog = new THREE.FogExp2(fogColors[ci], 0.025);
+  scene.background = new THREE.Color(fogColors[ci]);
+  camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 200);
+  camera.position.set(0, 1.7, 0);
+  camera.rotation.order = 'YXZ';
+  scene.add(new THREE.AmbientLight(0x203020, 0.8));
+  const sun = new THREE.DirectionalLight(0x80ff80, 0.6);
+  sun.position.set(8, 20, 8); sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024); scene.add(sun);
+  const fill = new THREE.PointLight(0xff4400, 0.3, 60);
+  fill.position.set(-10, 5, -10); scene.add(fill);
+  const floorColors = [0x1a2a1a, 0x1a1a2a, 0x2a1a1a, 0x0d0d12];
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60),
+    new THREE.MeshLambertMaterial({ color: floorColors[ci] }));
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(60, 60),
+    new THREE.MeshLambertMaterial({ color: 0x0a0a0a }));
+  ceil.rotation.x = Math.PI / 2; ceil.position.y = 8; scene.add(ceil);
+  const wallColors = [0x1e3020, 0x1e203a, 0x3a1e1e, 0x151520];
+  const wallMat = new THREE.MeshLambertMaterial({ color: wallColors[ci] });
+  [[0,4,-30,60,8,1],[0,4,30,60,8,1],[-30,4,0,1,8,60],[30,4,0,1,8,60]].forEach(([x,y,z,w,h,d]) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+    m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; scene.add(m);
+  });
+  const furCounts = [8, 10, 12, 6];
+  const furColors = [0x5c3d1e, 0x2a2a4a, 0x4a2a1e, 0x1a1a2a];
+  const furMat = new THREE.MeshLambertMaterial({ color: furColors[ci] });
+  for (let i = 0; i < furCounts[ci]; i++) {
+    const w = 1.5 + Math.random() * 2.5, h = 0.8 + Math.random() * 1.5, d = 1 + Math.random() * 2;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), furMat);
+    let px, pz;
+    do { px = Math.random() * 44 - 22; pz = Math.random() * 44 - 22; }
+    while (Math.sqrt(px * px + pz * pz) < 5);
+    m.position.set(px, h / 2, pz); m.castShadow = true; m.receiveShadow = true; scene.add(m);
+  }
+  for (let i = 0; i < 6; i++) {
+    const lamp = new THREE.PointLight(0x00ff44, 0.4, 18);
+    lamp.position.set(Math.random() * 40 - 20, 7, Math.random() * 40 - 20);
+    scene.add(lamp);
+  }
+  window.addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+}
+
+function buildBomb(x, z) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 20, 20),
+    new THREE.MeshPhongMaterial({ color: 0x1a1a1a, emissive: 0x330000, shininess: 120 }));
+  g.add(body);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8),
+    new THREE.MeshPhongMaterial({ color: 0x333333 }));
+  cap.position.y = 0.55; g.add(cap);
+  const fuse = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.8, 6),
+    new THREE.MeshPhongMaterial({ color: 0xff8800, emissive: 0x441100 }));
+  fuse.position.set(0.15, 1, 0); fuse.rotation.z = 0.3; g.add(fuse);
+  const led = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8),
+    new THREE.MeshPhongMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 1 }));
+  led.position.set(0, 0.35, 0.45); g.add(led);
+  const glow = new THREE.PointLight(0xff0000, 0.5, 3);
+  glow.position.set(0, 0.35, 0.45); g.add(glow);
+  g.position.set(x, 0.6, z);
+  g.userData = { isBomb: true };
+  scene.add(g); bombs.push(g);
+  return g;
+}
+
+function spawnBombs(n) {
+  bombs.forEach(b => scene.remove(b)); bombs = [];
+  for (let i = 0; i < n; i++) {
+    let x, z;
+    do { x = Math.random() * 44 - 22; z = Math.random() * 44 - 22; }
+    while (Math.sqrt(x * x + z * z) < 5);
+    buildBomb(x, z);
+  }
+  document.getElementById('bombs').textContent = n;
+}
+
+function drawRadar() {
+  const rc = document.getElementById('radarCanvas');
+  const ctx = rc.getContext('2d');
+  ctx.clearRect(0, 0, 120, 120);
+  ctx.fillStyle = 'rgba(0,10,0,0.85)';
+  ctx.beginPath(); ctx.arc(60, 60, 60, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#0a0'; ctx.lineWidth = 1;
+  [20, 40, 60].forEach(r => { ctx.beginPath(); ctx.arc(60, 60, r, 0, Math.PI * 2); ctx.stroke(); });
+  ctx.beginPath(); ctx.moveTo(60,0); ctx.lineTo(60,120); ctx.moveTo(0,60); ctx.lineTo(120,60); ctx.stroke();
+  bombs.forEach(b => {
+    const dx = b.position.x - camera.position.x, dz = b.position.z - camera.position.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    const angle = Math.atan2(dz, dx) - yaw - Math.PI / 2;
+    const r = Math.min(dist / 30 * 55, 55);
+    const px = 60 + Math.sin(angle) * r, py = 60 - Math.cos(angle) * r;
+    ctx.fillStyle = dist < 5 ? '#ff4444' : '#ff0000';
+    ctx.beginPath(); ctx.arc(px, py, dist < 5 ? 5 : 3, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.fillStyle = '#0f0'; ctx.beginPath(); ctx.arc(60, 60, 4, 0, Math.PI * 2); ctx.fill();
+}
+
+function openMinigame(bombIdx) {
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('minigame').style.display = 'flex';
+  const types = ['wires', 'sequence', 'code'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const box = document.getElementById('miniContent');
+  if (type === 'wires') {
+    const correct = Math.floor(Math.random() * 4);
+    const wires = [{c:'#1a44e8',n:'BLAU'},{c:'#cc1111',n:'ROT'},{c:'#11aa33',n:'GRUEN'},{c:'#ddcc00',n:'GELB'}];
+    box.innerHTML = '<div class="mini-title">KABELSCHNITT</div><div class="mini-sub">Schneide das richtige Kabel!</div>'
+      + '<div style="display:flex;gap:20px;justify-content:center;margin:24px 0">'
+      + wires.map((w,i) => '<button class="wire-btn" style="background:' + w.c + '" onclick="closeMini(' + (i===correct) + ',' + bombIdx + ')">' + w.n + '</button>').join('')
+      + '</div><button class="action-btn cancel" onclick="closeMini(undefined,undefined)">ABBRECHEN</button>';
+  } else if (type === 'sequence') {
+    const seq = Array.from({length:4}, () => Math.floor(Math.random() * 9) + 1);
+    window._seq = seq; window._seqUser = [];
+    box.innerHTML = '<div class="mini-title">SEQUENZ</div><div class="mini-sub">Merke und wiederhole!</div>'
+      + '<div id="seqDisplay" style="font-size:32px;letter-spacing:8px;color:#0f0;margin:16px 0;min-height:48px">&nbsp;</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:240px;margin:0 auto 20px">'
+      + [1,2,3,4,5,6,7,8,9].map(n => '<button class="seq-btn" id="sb'+n+'" onclick="pressSeq('+n+','+bombIdx+')">'+n+'</button>').join('')
+      + '</div><button class="action-btn cancel" onclick="closeMini(undefined,undefined)">ABBRECHEN</button>';
+    let i = 0;
+    const iv = setInterval(() => {
+      const el = document.getElementById('seqDisplay');
+      if (!el) { clearInterval(iv); return; }
+      el.textContent = seq.slice(0, i + 1).join(' ');
+      i++; if (i >= seq.length) clearInterval(iv);
+    }, 700);
+  } else {
+    const code = Math.floor(1000 + Math.random() * 9000);
+    window._miniCode = code;
+    box.innerHTML = '<div class="mini-title">GEHEIMCODE</div><div class="mini-sub">Merke dir den Code!</div>'
+      + '<div class="code-display" id="codeShow">' + code + '</div>'
+      + '<input class="code-input" id="codeInput" maxlength="4" type="text" inputmode="numeric" placeholder="____"><br><br>'
+      + '<button class="action-btn" onclick="checkCode(' + bombIdx + ')">BESTATIGEN</button>'
+      + '<button class="action-btn cancel" onclick="closeMini(undefined,undefined)">ABBRECHEN</button>';
+    setTimeout(() => { const el = document.getElementById('codeShow'); if (el) el.textContent = '????'; }, 2500);
+  }
+}
+
+window.pressSeq = function(n, bi) {
+  window._seqUser.push(n);
+  const btn = document.getElementById('sb' + n);
+  if (btn) { btn.classList.add('active'); setTimeout(() => btn.classList.remove('active'), 200); }
+  if (window._seqUser[window._seqUser.length-1] !== window._seq[window._seqUser.length-1]) {
+    if (btn) btn.classList.add('wrong');
+    setTimeout(() => closeMini(false, bi), 600); return;
+  }
+  if (window._seqUser.length === window._seq.length) closeMini(true, bi);
+};
+
+window.checkCode = function(bi) {
+  const v = parseInt(document.getElementById('codeInput').value);
+  closeMini(v === window._miniCode, bi);
+};
+
+function closeMini(ok, bi) {
+  document.getElementById('minigame').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+  if (ok === undefined) return;
+  if (ok && bi !== undefined && bombs[bi]) {
+    scene.remove(bombs[bi]); bombs.splice(bi, 1);
+    coins += 80;
+    document.getElementById('coins').textContent = coins;
+    document.getElementById('bombs').textContent = bombs.length;
+    toast('Bombe entschaerft! +80 Coins');
+    if (bombs.length === 0) endLevel(true);
+  } else if (ok === false) {
+    toast('Falsch! Weiter...');
+  }
+}
+window.closeMini = closeMini;
+
+document.addEventListener('pointerlockchange', () => {
+  isLocked = !!document.pointerLockElement;
+  document.getElementById('lockPrompt').style.opacity = isLocked ? '0' : '1';
+});
+document.addEventListener('mousemove', e => {
+  if (!isLocked) return;
+  yaw -= e.movementX * 0.0018;
+  pitch = Math.max(-1.2, Math.min(1.2, pitch - e.movementY * 0.0018));
+  camera.rotation.y = yaw; camera.rotation.x = pitch;
+});
+window.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === 'Escape' && document.getElementById('game').style.display === 'block') endLevel(false);
+});
+window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+const raycaster = new THREE.Raycaster();
+window.addEventListener('click', () => {
+  if (document.getElementById('game').style.display !== 'block') return;
+  if (!isLocked) { document.getElementById('canvas').requestPointerLock(); return; }
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const hits = raycaster.intersectObjects(scene.children, true);
+  for (const h of hits) {
+    let obj = h.object;
+    while (obj) {
+      const bi = bombs.findIndex(b => b === obj || b === obj.parent || b === obj.parent?.parent);
+      if (bi !== -1) {
+        if (h.distance > 6) { toast('Zu weit - naeher rangehen!'); return; }
+        openMinigame(bi); return;
+      }
+      obj = obj.parent;
+    }
+  }
+});
+
+function gameLoop() {
+  animId = requestAnimationFrame(gameLoop);
+  const spd = 0.12;
+  const fwd   = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+  const right = new THREE.Vector3( Math.cos(yaw), 0, -Math.sin(yaw));
+  if (keys['w']) camera.position.addScaledVector(fwd,  spd);
+  if (keys['s']) camera.position.addScaledVector(fwd, -spd);
+  if (keys['a']) camera.position.addScaledVector(right, -spd);
+  if (keys['d']) camera.position.addScaledVector(right,  spd);
+  camera.position.y = 1.7;
+  camera.position.clamp(new THREE.Vector3(-29,1.7,-29), new THREE.Vector3(29,1.7,29));
+  bombs.forEach(b => {
+    b.rotation.y += 0.01;
+    const led = b.children[3];
+    if (led && led.material) led.material.emissiveIntensity = 0.5 + 0.5 * Math.sin(Date.now() * 0.005);
+  });
+  drawRadar();
+  renderer.render(scene, camera);
+}
+
+function startGame() {
+  show('game');
+  if (animId) cancelAnimationFrame(animId);
+  yaw = 0; pitch = 0;
+  initThree();
+  spawnBombs(2 + currentLevel);
+  timeLeft = 90 + currentLevel * 10;
+  document.getElementById('time').textContent = timeLeft;
+  document.getElementById('level').textContent = currentLevel;
+  document.getElementById('chapter').textContent = chapters[Math.min(currentLevel - 1, 3)];
+  clearInterval(timerInterval);
+  const timerEl = document.getElementById('time');
+  timerInterval = setInterval(() => {
+    timeLeft--; timerEl.textContent = timeLeft;
+    timerEl.className = 'hud-timer' + (timeLeft <= 20 ? ' danger' : '');
+    if (timeLeft <= 0) { clearInterval(timerInterval); toast('ZEIT ABGELAUFEN!'); setTimeout(() => endLevel(false), 1000); }
+  }, 1000);
+  gameLoop();
+  document.getElementById('canvas').requestPointerLock();
+}
+
+function endLevel(won) {
+  clearInterval(timerInterval);
+  if (document.pointerLockElement) document.exitPointerLock();
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  const goTitle = document.getElementById('goTitle'), goMsg = document.getElementById('goMsg');
+  if (won) {
+    const bonus = 150 + currentLevel * 50; coins += bonus;
+    document.getElementById('coins').textContent = coins;
+    currentLevel++;
+    if (currentLevel > 4) {
+      goTitle.textContent = 'LEGENDE!';
+      goMsg.innerHTML = 'Alle 4 Kapitel gemeistert! Coins: ' + coins;
+      currentLevel = 1;
+    } else {
+      goTitle.textContent = 'LEVEL ABGESCHLOSSEN!';
+      goMsg.innerHTML = '+' + bonus + ' Coins. Weiter zu: ' + chapters[Math.min(currentLevel-1,3)];
+    }
+  } else {
+    goTitle.textContent = 'MISSION FEHLGESCHLAGEN';
+    goMsg.innerHTML = 'Level ' + currentLevel + ' nicht geschafft. Coins: ' + coins;
+  }
+  show('gameover');
+}
+
+function returnMenu() {
+  clearInterval(timerInterval);
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  show('menu');
+}
+window.returnMenu = returnMenu;
+
+function showShop() {
+  show('shop');
+  document.getElementById('skinGrid').innerHTML = SKINS.map((s, i) => {
+    const hex = '#' + s.color.toString(16).padStart(6, '0');
+    const isOwned = ownedSkins.includes(i), isActive = currentSkin === i;
+    return '<div class="skin-card' + (isOwned?' owned':'') + (isActive?' active':'') + '" onclick="buySkin(' + i + ')">'
+      + '<div style="width:42px;height:42px;border-radius:50%;background:' + hex + ';margin:0 auto 10px;border:2px solid rgba(255,255,255,.2)"></div>'
+      + '<div class="skin-name">' + s.name + '</div>'
+      + '<div class="skin-price">' + (s.price === 0 ? 'GRATIS' : s.price + ' Coins') + '</div>'
+      + (isActive ? '<div style="font-size:11px;color:#0f0;margin-top:4px">AKTIV</div>'
+                  : isOwned ? '<div style="font-size:11px;color:#0a0;margin-top:4px">BESESSEN</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+window.buySkin = function(i) {
+  if (ownedSkins.includes(i)) { currentSkin = i; showShop(); return; }
+  if (coins >= SKINS[i].price) {
+    coins -= SKINS[i].price; ownedSkins.push(i); currentSkin = i;
+    document.getElementById('coins').textContent = coins;
+    showShop(); toast('Skin: ' + SKINS[i].name);
+  } else { toast('Nicht genug Coins!'); }
+};
+function closeShop() { show('menu'); }
+window.closeShop = closeShop; window.showShop = showShop;
+
+function showLeaderboard() {
+  show('leaderboard');
+  const rows = [...LEADERBOARD, { name: 'DU', score: coins + 1200, isPlayer: true }]
+    .sort((a, b) => b.score - a.score);
+  const medals = ['1.','2.','3.'];
+  document.getElementById('lbList').innerHTML = rows.map((r, i) =>
+    '<div class="lb-row" style="' + (r.isPlayer ? 'background:rgba(0,40,0,.4);border-radius:6px;padding:10px;' : '') + '">'
+    + '<div class="lb-rank">' + (medals[i] || (i+1)+'.') + '</div>'
+    + '<div class="lb-name" style="' + (r.isPlayer ? 'color:#0f0;font-weight:700' : '') + '">' + r.name + '</div>'
+    + '<div class="lb-score">' + r.score.toLocaleString('de-DE') + '</div></div>'
+  ).join('');
+}
+function closeLeaderboard() { show('menu'); }
+window.closeLeaderboard = closeLeaderboard; window.showLeaderboard = showLeaderboard;
+window.startGame = startGame;
+<\/script>
+</body>
+</html>`;
+
+function highlight(code) {
+  return code
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/(\/\/[^\n]*)/g,'<span class="cmt">$1</span>')
+    .replace(/(&lt;!--[\s\S]*?--&gt;)/g,'<span class="cmt">$1</span>')
+    .replace(/\b(function|const|let|var|return|if|else|for|while|new|this|class|import|export|default|typeof|undefined|null|true|false|of|in|do|break|continue|async|await|setTimeout|setInterval|clearInterval|clearTimeout|requestAnimationFrame|cancelAnimationFrame|parseInt|Math|Date|window|document|console)\b/g,'<span class="kw">$1</span>')
+    .replace(/(["'`])((?:\\.|(?!\1)[^\\])*?)\1/g,'<span class="str">$1$2$1</span>')
+    .replace(/\b(\d+(\.\d+)?)\b/g,'<span class="num">$1</span>')
+    .replace(/(&lt;\/?)([\w-]+)/g,'<span class="tag">$1$2</span>');
+}
+
+const lines = RAW.split('\n');
+const nums = document.getElementById('lineNums');
+const code = document.getElementById('codeBlock');
+nums.innerHTML = lines.map((_,i) => `<span>${i+1}</span>`).join('');
+code.innerHTML = highlight(lines.join('\n'));
+document.getElementById('lineCount').textContent = lines.length + ' Zeilen';
+
+function copyCode() {
+  navigator.clipboard.writeText(RAW).then(() => {
+    const t = document.getElementById('toast');
+    t.style.opacity = '1';
+    setTimeout(() => t.style.opacity = '0', 2000);
+  });
+}
+
+function downloadGame() {
+  const blob = new Blob([RAW], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'BombDefuser3D.html';
+  a.click();
+}
+</script>
+</body>
+</html>

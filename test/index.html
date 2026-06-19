@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --bg: #f4f4f4;
+            --panel: #ffffff;
+            --text: #222222;
+            --accent: #0066ff;
+            --danger: #ff3333;
+        }
+        
+        body.dark {
+            --bg: #1a1a1a;
+            --panel: #252525;
+            --text: #eeeeee;
+            --accent: #4d9fff;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .wrapper {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .sidebar {
+            width: 260px;
+            background: var(--panel);
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+        
+        .rooms {
+            padding: 8px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .room {
+            padding: 12px 16px;
+            margin: 4px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .room:hover {
+            background: rgba(0, 102, 255, 0.1);
+        }
+        
+        .room.active {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        
+        .topbar {
+            padding: 14px 20px;
+            background: var(--panel);
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .msg {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: var(--panel);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        .msg.self {
+            align-self: flex-end;
+            background: #e3f2ff;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .msg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 0.85rem;
+        }
+        
+        .msg-name {
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        .msg-time {
+            font-size: 0.75rem;
+            color: #888;
+        }
+        
+        .admin-controls {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: none;
+            gap: 6px;
+        }
+        
+        .msg:hover .admin-controls {
+            display: flex;
+        }
+        
+        .admin-btn {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .inputbar {
+            padding: 16px 20px;
+            background: var(--panel);
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        input {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        #name {
+            width: 140px;
+        }
+        
+        #text {
+            flex: 1;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #0052cc;
+        }
+        
+        .emoji-btn {
+            background: transparent;
+            font-size: 1.5rem;
+            padding: 8px;
+        }
+        
+        .emojiBox {
+            position: absolute;
+            bottom: 80px;
+            right: 30px;
+            background: var(--panel);
+            border: 1px solid #ccc;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 100;
+            max-width: 280px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .emojiBox span {
+            font-size: 1.6rem;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+        }
+        
+        .emojiBox span:hover {
+            background: #f0f0f0;
+        }
+        
+        .admin-section {
+            padding: 16px;
+            border-top: 1px solid #ddd;
+            font-size: 0.9rem;
+        }
+        
+        .ban-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .ban-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            background: #fff3f3;
+            margin: 4px 0;
+            border-radius: 6px;
+        }
+        
+        .status {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #4caf50;
+            color: white;
+        }
+    </style>
+  <title>test</title>
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7wn5qAPC90ZXh0Pjwvc3ZnPg==">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="test">
+  <meta property="og:image" content="https://deploy.ohg.marwitz.dev/mokhtar/test/og-image.png">
+  <meta property="og:image:width" content="780">
+  <meta property="og:image:height" content="1688">
+  <link rel="manifest" href="manifest.json">
+  <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }</script>
+  <script src="firebase-config.js"></script>
+  <script type="module" src="firebase-handler.js"></script>
+</head>
+<body>
+
+<div class="wrapper">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3>📂 Räume</h3>
+        </div>
+        
+        <div class="rooms">
+            <div class="room active" data-room="global" onclick="setRoom('global')">
+                🌍 Global
+            </div>
+            <div class="room" data-room="deutsch" onclick="setRoom('deutsch')">
+                🇩🇪 Deutsch
+            </div>
+        </div>
+        
+        <div class="admin-section">
+            <button onclick="toggleDark()" style="width:100%; margin-bottom:12px;">
+                🌙 Dark Mode
+            </button>
+            
+            <div style="margin-bottom:12px;">
+                <input type="password" id="adminPass" placeholder="Admin Passwort" style="width:100%; margin-bottom:6px;">
+                <button onclick="checkAdmin()" style="width:100%;">Admin Login</button>
+            </div>
+            
+            <div id="banListArea" style="display:none;">
+                <h4 style="margin:8px 0 6px;">🚫 Gebannte Nutzer</h4>
+                <div id="banList" class="ban-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat">
+        <div class="topbar">
+            <div id="roomLabel">🌍 Global</div>
+            <div id="onlineCount" style="font-size:0.9rem; color:#666;">• online</div>
+        </div>
+        
+        <div class="messages" id="messages"></div>
+        
+        <div class="inputbar">
+            <input id="name" placeholder="Dein Name" maxlength="20">
+            <input id="text" placeholder="Nachricht schreiben..." maxlength="500">
+            <button onclick="toggleEmoji()" class="emoji-btn">😊</button>
+            <button onclick="send()">Senden</button>
+        </div>
+        
+        <div class="emojiBox" id="emojiBox">
+            <span onclick="addEmoji(this)">😀</span>
+            <span onclick="addEmoji(this)">😃</span>
+            <span onclick="addEmoji(this)">😄</span>
+            <span onclick="addEmoji(this)">😁</span>
+            <span onclick="addEmoji(this)">😆</span>
+            <span onclick="addEmoji(this)">😅</span>
+            <span onclick="addEmoji(this)">😂</span>
+            <span onclick="addEmoji(this)">🙃</span>
+            <span onclick="addEmoji(this)">😉</span>
+            <span onclick="addEmoji(this)">😊</span>
+            <span onclick="addEmoji(this)">❤️</span>
+            <span onclick="addEmoji(this)">👍</span>
+            <span onclick="addEmoji(this)">👎</span>
+            <span onclick="addEmoji(this)">🎉</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // === DATABASE (simple localStorage based) ===
+    const DB = {
+        CHAT_KEY: "chat_msgs",
+        BANNED_KEY: "banned_users",
+        
+        async init() {
+            // nothing needed for localStorage
+        },
+        
+        async add(collection, data) {
+            const items = this.getAll(collection);
+            const newItem = {
+                ...data,
+                id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+                time: Date.now()
+            };
+            items.push(newItem);
+            localStorage.setItem(collection, JSON.stringify(items));
+            return newItem;
+        },
+        
+        async list(collection, field = null, op = null, value = null) {
+            let items = this.getAll(collection);
+            
+            if (field && op === "==" && value !== null) {
+                items = items.filter(item => item[field] === value);
+            }
+            
+            return items;
+        },
+        
+        async set(collection, id, updates) {
+            const items = this.getAll(collection);
+            const index = items.findIndex(item => item.id === id);
+            if (index !== -1) {
+                items[index] = { ...items[index], ...updates };
+                localStorage.setItem(collection, JSON.stringify(items));
+            }
+        },
+        
+        getAll(collection) {
+            const data = localStorage.getItem(collection);
+            return data ? JSON.parse(data) : [];
+        }
+    };
+
+    // === STATE ===
+    let currentRoom = "global";
+    let isAdmin = sessionStorage.getItem("isAdmin") === "true";
+    let currentUser = localStorage.getItem("username") || "Gast";
+
+    // === ADMIN FUNCTIONS ===
+    async function checkAdmin() {
+        const pass = document.getElementById("adminPass").value;
+        if (pass === "mokcha123") {
+            isAdmin = true;
+            sessionStorage.setItem("isAdmin", "true");
+            document.getElementById("banListArea").style.display = "block";
+            alert("✅ Admin-Modus aktiviert!");
+            loadBanList();
+        } else {
+            alert("❌ Falsches Passwort!");
+        }
+    }
+
+    async function banUser(username) {
+        if (!isAdmin) return;
+        const banned = await DB.list(DB.BANNED_KEY);
+        const existing = banned.find(b => b.name === username);
+        
+        if (existing) {
+            await DB.set(DB.BANNED_KEY, existing.id, { active: true });
+        } else {
+            await DB.add(DB.BANNED_KEY, { name: username, active: true });
+        }
+        
+        alert(`${username} wurde gebannt.`);
+        loadBanList();
+    }
+
+    async function unbanUser(id) {
+        if (!isAdmin) return;
+        await DB.set(DB.BANNED_KEY, id, { active: false });
+        loadBanList();
+    }
+
+    async function loadBanList() {
+        if (!isAdmin) return;
+        const all = await DB.list(DB.BANNED_KEY);
+        const active = all.filter(b => b.active === true);
+        const container = document.getElementById("banList");
+        container.innerHTML = "";
+        
+        active.forEach(b => {
+            const div = document.createElement("div");
+            div.className = "ban-item";
+            div.innerHTML = `
+                <span>${b.name}</span>
+                <button onclick="unbanUser('${b.id}')" style="background:#ff3333;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Entbannen</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // === CHAT FUNCTIONS ===
+    async function send() {
+        const nameInput = document.getElementById("name");
+        const textInput = document.getElementById("text");
+        
+        const name = nameInput.value.trim() || "Gast";
+        const text = textInput.value.trim();
+        
+        if (!text) return;
+        
+        // Check ban
+        const bannedList = await DB.list(DB.BANNED_KEY, 'name', '==', name);
+        if (bannedList.some(b => b.active === true)) {
+            alert("Du bist gebannt und kannst keine Nachrichten senden.");
+            return;
+        }
+        
+        await DB.add(DB.CHAT_KEY, {
+            room: currentRoom,
+            name: name,
+            text: text,
+            deleted: false
+        });
+        
+        textInput.value = "";
+        currentUser = name;
+        localStorage.setItem("username", name);
+        
+        loadMessages();
+    }
+
+    async function deleteMsg(id) {
+        if (!isAdmin) return;
+        await DB.set(DB.CHAT_KEY, id, { deleted: true });
+        loadMessages();
+    }
+
+    async function loadMessages() {
+        const allMsgs = await DB.list(DB.CHAT_KEY);
+        const filtered = allMsgs
+            .filter(m => m.room === currentRoom && m.deleted !== true)
+            .sort((a, b) => a.time - b.time);
+        
+        const container = document.getElementById("messages");
+        container.innerHTML = "";
+        
+        filtered.forEach(msg => {
+            const div = document.createElement("div");
+            div.className = `msg ${msg.name === currentUser ? 'self' : ''}`;
+            
+            const time = new Date(msg.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            
+            let adminHTML = '';
+            if (isAdmin) {
+                adminHTML = `
+                    <div class="admin-controls">
+                        <button class="admin-btn" onclick="deleteMsg('${msg.id}')">Löschen</button>
+                        <button class="admin-btn" onclick="banUser('${msg.name}')">Ban</button>
+                    </div>
+                `;
+            }
+            
+            div.innerHTML = `
+                ${adminHTML}
+                <div class="msg-header">
+                    <span class="msg-name">${msg.name}</span>
+                    <span class="msg-time">${time}</span>
+                </div>
+                <div>${msg.text}</div>
+            `;
+            container.appendChild(div);
+        });
+        
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // === UI HELPERS ===
+    function setRoom(room) {
+        currentRoom = room;
+        document.getElementById("roomLabel").textContent = room === "global" ? "🌍 Global" : "🇩🇪 Deutsch";
+        
+        // Update active room styling
+        document.querySelectorAll('.room').forEach(r => {
+            r.classList.toggle('active', r.dataset.room === room);
+        });
+        
+        loadMessages();
+    }
+
+    function toggleDark() {
+        document.body.classList.toggle("dark");
+    }
+
+    function toggleEmoji() {
+        const box = document.getElementById("emojiBox");
+        box.style.display = box.style.display === "flex" ? "none" : "flex";
+    }
+
+    function addEmoji(el) {
+        const textInput = document.getElementById("text");
+        textInput.value += el.textContent;
+        textInput.focus();
+    }
+
+    // === KEYBOARD SUPPORT ===
+    function setupKeyboard() {
+        document.getElementById("text").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                send();
+            }
+        });
+    }
+
+    // === INIT ===
+    async function init() {
+        await DB.init();
+        
+        // Set saved name
+        const savedName = localStorage.getItem("username");
+        if (savedName) {
+            document.getElementById("name").value = savedName;
+            currentUser = savedName;
+        }
+        
+        // Admin state
+        if (isAdmin) {
+            document.getElementById("banListArea").style.display = "block";
+            loadBanList();
+        }
+        
+        // Initial load
+        setRoom("global");
+        loadMessages();
+        
+        // Auto refresh every 2 seconds
+        setInterval(loadMessages, 2000);
+        
+        setupKeyboard();
+        
+        // Close emoji box when clicking outside
+        document.addEventListener("click", function(e) {
+            const emojiBox = document.getElementById("emojiBox");
+            if (!e.target.closest(".emoji-btn") && !e.target.closest(".emojiBox")) {
+                emojiBox.style.display = "none";
+            }
+        });
+    }
+
+    // Start the app
+    window.onload = init;
+</script>
+</body>
+</html>
